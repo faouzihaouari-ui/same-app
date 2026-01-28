@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAME</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin: 20px 0;
+            letter-spacing: -2px;
+        }
+
+        .opdracht {
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            margin: 20px 0;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .opdracht h2 {
+            color: #888;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .opdracht p {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .upload {
+            background: #2a2a2a;
+            border: 2px dashed #444;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            max-width: 500px;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        .upload:hover {
+            border-color: #fff;
+            background: #333;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .collage {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            max-width: 800px;
+            width: 100%;
+            margin-top: 30px;
+        }
+
+        .collage img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .timer {
+            color: #666;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>SAME</h1>
+    
+    <div class="opdracht">
+        <h2>Opdracht van vandaag</h2>
+        <p id="vraag">Laad...</p>
+    </div>
+
+    <label class="upload" id="uploadLabel">
+        <input type="file" id="fileInput" accept="image/*">
+        <p>📸 Klik om foto te uploaden</p>
+        <p style="color: #666; font-size: 0.9rem; margin-top: 10px;">Of sleep hierheen</p>
+    </label>
+
+    <div class="timer">
+        Nieuwe opdracht over: <span id="countdown">00:00:00</span>
+    </div>
+
+    <div class="collage" id="collage"></div>
+
+    <script>
+        const opdrachten = [
+            "Fotografeer iets blauws",
+            "Fotografeer je schaduw",
+            "Fotografeer iets ronds",
+            "Fotografeer een reflectie",
+            "Fotografeer iets ouds",
+            "Fotografeer iets nieuws",
+            "Fotografeer een patroon",
+            "Fotografeer iets groens"
+        ];
+
+        function getVraag() {
+            const start = new Date('2024-01-01').getTime();
+            const now = new Date().getTime();
+            const days = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+            return opdrachten[days % opdrachten.length];
+        }
+
+        function updateTimer() {
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+            
+            const diff = tomorrow - now;
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const secs = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            document.getElementById('countdown').textContent = 
+                ${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')};
+        }
+
+        function loadCollage() {
+            const vandaag = new Date().toDateString();
+            const key = 'same_' + vandaag;
+            const images = JSON.parse(localStorage.getItem(key) || '[]');
+            
+            const collage = document.getElementById('collage');
+            collage.innerHTML = '';
+            
+            images.forEach(img => {
+                const div = document.createElement('div');
+                div.innerHTML = <img src="${img}" alt="upload">;
+                collage.appendChild(div);
+            });
+        }
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const vandaag = new Date().toDateString();
+                const key = 'same_' + vandaag;
+                const images = JSON.parse(localStorage.getItem(key) || '[]');
+                images.push(event.target.result);
+                localStorage.setItem(key, JSON.stringify(images));
+                
+                loadCollage();
+                document.getElementById('uploadLabel').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('vraag').textContent = getVraag();
+        setInterval(updateTimer, 1000);
+        updateTimer();
+        loadCollage();
+    </script>
+</body>
+</html>
